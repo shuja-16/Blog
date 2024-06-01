@@ -1,10 +1,11 @@
-from rest_framework import generics,status
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.exceptions import NotFound
+from django.shortcuts import get_object_or_404
 from .models import BlogPost
 from .serializers import BlogPostSerializer
 from api.permissions import IsOwnerOrReadOnly
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework.response import Response
-
 
 class BlogPostListCreateView(generics.ListCreateAPIView):
     queryset = BlogPost.objects.all()
@@ -25,15 +26,10 @@ class BlogPostDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = BlogPost.objects.all()
     serializer_class = BlogPostSerializer
     permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
-    lookup_field = 'slug'
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
-
+    lookup_field = 'pk'
     def get_object(self):
         queryset = self.get_queryset()
-        queryset = self.filter_queryset(queryset)
-        slug = self.kwargs.get(self.lookup_field)
-        obj = generics.get_object_or_404(queryset, slug=slug)
+        pk = self.kwargs.get(self.lookup_field)
+        obj = get_object_or_404(queryset, pk=pk)
         self.check_object_permissions(self.request, obj)
         return obj
